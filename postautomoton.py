@@ -24,7 +24,7 @@ def feedchecker(url):
     post_list = []
 
     for entry in entries:
-        post_info_dict.update({'title': entry.title, 'date': entry.published})
+        post_info_dict.update({'title': entry.title, 'link': entry.link, 'date': entry.published})
         post_list.append(post_info_dict.copy())
     return post_list
 
@@ -51,11 +51,21 @@ def statuschecker(mastodon_host, account_id):
         status_update_list.append(entry['content'])
     return status_update_list
 
+# Look through RSS posts to see if there has been a new post in past 24 hours
+# If so, see if it has been shared to Mastodon. If it has not, then post it to Mastodon
+# Need to check the json response from the statuschecker function to see if I can get post dates of statuses
+# Check statuschecker fields: created_at, content, application.name
+def unsharedposts():
+    for post in post_list:
+
+
+# Text that will be sent to Mastodon for new posts
+#new_post = f'{rss_post_title}: {rss_post_url}'
+
 post_list = feedchecker(rssfeed)
+#print(post_list)
 account_id = getid(auth_token, mastodon_host)
 status_list = statuschecker(mastodon_host, account_id)
-
-
 
 '''
 url = 'https://mstdn.social/api/v1/statuses'
