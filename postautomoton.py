@@ -16,6 +16,9 @@ auth_token = ''
 # Set hostname (e.g. mstdn.social) of Mastodon account
 mastodon_host = 'mstdn.social'
 
+# How often (in hours) will you run this script?
+hours_since_last_check = '24'
+
 def feedchecker(url):
     feed = feedparser.parse(url)
 
