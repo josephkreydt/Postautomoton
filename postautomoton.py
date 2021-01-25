@@ -57,7 +57,7 @@ def statuschecker(mastodon_host, account_id):
 # Look through RSS posts to see if there has been a new post in past 24 hours
 # If so, see if it has been shared to Mastodon. If it has not, then post it to Mastodon
 # Need to check the json response from the statuschecker function to see if I can get post dates of statuses
-# Check statuschecker fields: created_at, content, application.name
+# Check statuschecker fields: created_at, content, application.name (would be "Postautomoton" if posted by this script)
 def unsharedposts():
     for post in post_list:
 
