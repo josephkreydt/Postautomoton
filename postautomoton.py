@@ -7,7 +7,7 @@
 import requests
 import feedparser
 import datetime
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 
 # Set URL of RSS feed to check
