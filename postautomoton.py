@@ -7,7 +7,7 @@
 import requests
 import feedparser
 import datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 
 # Set URL of RSS feed to check
@@ -19,15 +19,17 @@ auth_token = '4-Y3nDFgrz8hV7WmbRqDAV52TiAnsQ8jeSvfbYN0g30'
 # Set hostname (e.g. mstdn.social) of Mastodon account
 mastodon_host = 'mstdn.social'
 
-# How often (in hours) will you run this script?
-hours_since_last_check = '24'
+# How often (in days) will you run this script?
+days_since_last_check = 1
 
 # Setting date and time
 dateFormat = "%a, %d %b %Y %H:%M:%S %z"
 gmt = pytz.timezone('GMT')
 est = pytz.timezone('EST')
-now = datetime.now(gmt)
-utcOffsetOfGmt = now.strftime('%z')
+now = datetime.now(est)
+# make current datetime offset-aware so it can be compared with RSS post datetimes
+#now = pytz.utc.localize(nowPre)
+#utcOffsetOfGmt = now.strftime('%z')
 #print(utcOffsetOfGmt)
 
 def feedchecker(url):
@@ -84,44 +86,36 @@ def datetimeF_ckery(rssSinglePost):
         # convert the last 3 values of the RSS post's date string into a datetime timezone object
         rssSinglePostTimezone = pytz.timezone(last3ofDateString)
         # Calculate the UTC offset value of the RSS post's timezone
-        rssSinglePostUtcOffset = utcNow.astimezone(rssSinglePostTimezone).strftime('%z')
+        rssSinglePostUtcOffset = rssSinglePostDate.astimezone(rssSinglePostTimezone).strftime('%z')
         # Remove the timezone abbreviation and convert the RSS post's date to a string
         rssSinglePostDateFmt2 = rssSinglePostDate.strftime('%a, %d %b %Y %H:%M:%S')
         # Concatenate the new RSS post date string with the RSS post's UTC offset
-        rssSinglePostDateFinal = rssSinglePostDateFmt2 + " " + rssSinglePostUtcOffset
+        rssSinglePostDateFinalPre = rssSinglePostDateFmt2 + " " + rssSinglePostUtcOffset
+        
+        # Convert the string to datetime object
+        rssSinglePostDateFinal = datetime.strptime(rssSinglePostDateFinalPre, "%a, %d %b %Y %H:%M:%S %z")
         
         return rssSinglePostDateFinal
 
-print(datetimeF_ckery({'title': 'Taking Ownership of Everything, Including Hidden Files, in a Directory', 'link': 'https://bitsrfr.com/taking-ownership-of-hidden-files-recursively-in-linux/', 'date': 'Wed, 27 Jan 2021 00:11:14 GMT'}))
+#print(datetimeF_ckery({'title': 'Taking Ownership of Everything, Including Hidden Files, in a Directory', 'link': 'https://bitsrfr.com/taking-ownership-of-hidden-files-recursively-in-linux/', 'date': 'Wed, 27 Jan 2021 00:11:14 GMT'}))
 
-'''
 # Look through RSS posts to see if there has been a new post in past 24 hours
 # If so, see if it has been shared to Mastodon. If it has not, then post it to Mastodon
 # Need to check the json response from the statuschecker function to see if I can get post dates of statuses
 # Check statuschecker fields: created_at, content, application.name (would be "Postautomoton" if posted by this script)
 def unsharedposts(post_list):
-    for post in post_list:
-        ### figuring out the UTC offset of the timezone of the post date
-        # parse string and pull last 3 characters
-        thirdToLastOfDateString = post['date'][-3]
-        # if they are numbers, then use %z in formatting postDate
-        if thirdToLastOfDateString.isdigit():
-            postDate = datetime.strptime(post['date'], "%a, %d %b %Y %H:%M:%S %z")
-        # if they are letters, then convert to UTC offset
-         STUCK ON THIS PART************************************
-        else:
-            last3ofDateString = post['date'][-3:]
-            utcOffset = last3ofDateString.strftime('%z')
-            print(utcOffset)
-        #utcOffset = post['date'].strftime("%a, %d %b %Y %H:%M:%S %Z")
+    unsharedPosts = []
 
-        postDate = datetime.strptime(post['date'], "%a, %d %b %Y %H:%M:%S %Z")
+    for post in post_list:
+        postDate = datetimeF_ckery(post)
         print(postDate)
-        
-        #yesterday = now - timedelta(days=1)
-        if postDate > now:
-            print("yay!")
-    return 0
+        print(now)
+        lastCheck = now - timedelta(days=days_since_last_check)
+        if postDate > lastCheck:
+            print("Item to share to Mastodon: ")
+            print(post['title'])
+            unsharedPosts.append(post)
+    return unsharedPosts
 # Text that will be sent to Mastodon for new posts
 #new_post = f'{rss_post_title}: {rss_post_url}'
 
@@ -131,7 +125,7 @@ account_id = getid(auth_token, mastodon_host)
 status_list = statuschecker(mastodon_host, account_id)
 published_dates = unsharedposts(post_list)
 
-
+'''
 url = 'https://mstdn.social/api/v1/statuses'
 auth = {'Authorization': 'Bearer <YOUR BEARER TOKEN/API AUTH KEY GOES HERE>'}
 
