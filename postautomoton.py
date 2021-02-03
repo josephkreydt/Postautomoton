@@ -1,68 +1,82 @@
 #
-# Check RSS feed for posts
-# Check Mastodon timeline for status updates about RSS feed posts
-# If no status update about post, post status update about it
+# Check RSS feed for posts published in past __ hours
+# If any, share post title and URL to Mastodon
 #
 
 import requests
 import feedparser
-import datetime
+##########import datetime
 from datetime import datetime, timedelta
 import pytz
 
+#### GLOBAL CONSTANTS ####
+
 # Set URL of RSS feed to check
-rssfeed = 'https://bitsrfr.com/rss/'
+RSS_FEED_URL = 'https://bitsrfr.com/rss/'
 
 # Set authorization token of Mastodon account
-access_token = '4-Y3nDFgrz8hV7WmbRqDAV52TiAnsQ8jeSvfbYN0g30'
+MASTODON_ACCESS_TOKEN = ''
 
 # Set hostname (e.g. mstdn.social) of Mastodon account
-mastodon_host = 'mstdn.social'
+MASTODON_HOST = 'mstdn.social'
 
-# How often (in days) will you run this script?
-hours_since_last_check = 24 * 4
+# How often (in hours) will you run this script?
+HOURS_SINCE_LAST_RUN = 24
 
-# Setting date and time
-dateFormat = "%a, %d %b %Y %H:%M:%S %z"
-gmt = pytz.timezone('GMT')
-est = pytz.timezone('EST')
-now = datetime.now(est)
+# Setting up date and time - don't change these
+#########date_format = "%a, %d %b %Y %H:%M:%S %z"
+#########gmt_timezone = pytz.timezone('GMT')
+#########est_timezone = pytz.timezone('EST')
+###########current_time_eastern = datetime.now(est_timezone)
+current_time_utc = datetime.now(pytz.utc)
 
-def feedchecker(url):
-    feed = feedparser.parse(url)
+#### FUNCTIONS ####
 
-    entries = feed.entries
-    post_info_dict= {}
-    post_list = []
+# Parse the RSS feed
+# Add each post's title, URL, and published date to rss_post_list
+def parse_rss_feed():
+    rss_feed = feedparser.parse(RSS_FEED_URL)
+    rss_feed_entries = rss_feed.entries
+    rss_post_info_dict = {}
+    rss_post_list = []
 
-    for entry in entries:
-        post_info_dict.update({'title': entry.title, 'link': entry.link, 'date': entry.published})
-        post_list.append(post_info_dict.copy())
-    return post_list
+    for entry in rss_feed_entries:
+        rss_post_info_dict.update({'title': entry.title, 'link': entry.link, 'date': entry.published})
+        rss_post_list.append(rss_post_info_dict.copy())
+    return rss_post_list
 
-def getid(access_token, mastodon_host):
-    api_url = f'https://{mastodon_host}/api/v1/accounts/verify_credentials'
-    auth_header = {'Authorization': f'Bearer {access_token}'}
+'''
+# NOT USED IN CURRENT IMPLEMENTATION
+# Call Mastodon API, supply access token, and obtain the user account ID
+# ID is needed to check status updates posted by an account
+def get_mastodon_account_id():
+    api_url = f'https://{MASTODON_HOST}/api/v1/accounts/verify_credentials'
+    auth_header = {'Authorization': f'Bearer {MASTODON_ACCESS_TOKEN}'}
 
     response = requests.get(api_url, headers=auth_header)
 
     json_response = response.json()
-    account_id = json_response['id']
-    return account_id
+    mastodon_account_id = json_response['id']
+    return mastodon_account_id
 
-def statuschecker(mastodon_host, account_id):
-    api_url = f'https://{mastodon_host}/api/v1/accounts/{account_id}/statuses'
+# NOT USED IN CURRENT IMPLEMENTATION
+# Call Mastodon API, supply account ID, and obtain account's status updates
+# Extract only the content of each status update
+def parse_mastodon_account_statuses(mastodon_account_id):
+    api_url = f'https://{MASTODON_HOST}/api/v1/accounts/{mastodon_account_id}/statuses'
 
     response = requests.get(api_url)
 
     status_updates = response.json()
 
-    status_update_list = []
+    mastodon_account_statuses = []
 
     for entry in status_updates:
-        status_update_list.append(entry['content'])
-    return status_update_list
+        mastodon_account_statuses.append(entry['content'])
+    return mastodon_account_statuses
+'''
 
+#### LEFT OFF HERE, WITH DATETIMEFUCKERY
 def datetimeF_ckery(rssSinglePost):
     utcNow = datetime.now()
     rssSinglePostDate = datetime.strptime(rssSinglePost['date'], "%a, %d %b %Y %H:%M:%S %Z")
@@ -95,14 +109,14 @@ def datetimeF_ckery(rssSinglePost):
 
 # Look through RSS posts to see if there has been a new post in past 24 hours
 # If so, see if it has been shared to Mastodon. If it has not, then post it to Mastodon
-# Need to check the json response from the statuschecker function to see if I can get post dates of statuses
-# Check statuschecker fields: created_at, content, application.name (would be "Postautomoton" if posted by this script)
-def unsharedposts(post_list):
+# Need to check the json response from the parse_mastodon_account_statuses function to see if I can get post dates of statuses
+# Check parse_mastodon_account_statuses fields: created_at, content, application.name (would be "Postautomoton" if posted by this script)
+def unsharedposts(rss_post_list):
     unsharedPosts = []
 
-    for post in post_list:
+    for post in rss_post_list:
         postDate = datetimeF_ckery(post)
-        lastCheck = now - timedelta(hours=hours_since_last_check)
+        lastCheck = current_time_utc - timedelta(hours=HOURS_SINCE_LAST_RUN)
         if postDate > lastCheck:
             print("Item to share to Mastodon: ")
             print(post['title'])
@@ -117,17 +131,17 @@ def POST_TO_MASTODON(unshared_posts):
         rss_post_title = post['title']
         rss_post_url = post['link']
         post_text = f'NEW POST: {rss_post_title} :: {rss_post_url}'
-        api_url = f'https://{mastodon_host}/api/v1/statuses'
-        api_auth = {'Authorization': f'Bearer {access_token}'}
+        api_url = f'https://{MASTODON_HOST}/api/v1/statuses'
+        api_auth = {'Authorization': f'Bearer {MASTODON_ACCESS_TOKEN}'}
         api_params = {'status': f'{post_text}'}
         api_response = requests.post(api_url, data=api_params, headers=api_auth)
         api_responses.append(api_response)
     return api_responses
 
-post_list = feedchecker(rssfeed)
-account_id = getid(access_token, mastodon_host)
-status_list = statuschecker(mastodon_host, account_id)
-unshared_posts = unsharedposts(post_list)
+rss_post_list = parse_rss_feed()
+# mastodon_account_id = get_mastodon_account_id()
+# mastodon_account_statuses = parse_mastodon_account_statuses(mastodon_account_id)
+unshared_posts = unsharedposts(rss_post_list)
 api_responses = POST_TO_MASTODON(unshared_posts)
 
 for response in api_responses:
