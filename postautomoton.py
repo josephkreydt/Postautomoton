@@ -23,11 +23,7 @@ MASTODON_HOST = 'mstdn.social'
 # How often (in hours) will you run this script?
 HOURS_SINCE_LAST_RUN = 24
 
-# Setting up date and time - don't change these
-#########date_format = "%a, %d %b %Y %H:%M:%S %z"
-#########gmt_timezone = pytz.timezone('GMT')
-#########est_timezone = pytz.timezone('EST')
-###########current_time_eastern = datetime.now(est_timezone)
+## MOVE THIS vvv INTO THE FUNCTION(S) THAT USES IT ##
 current_time_utc = datetime.now(pytz.utc)
 
 #### FUNCTIONS ####
