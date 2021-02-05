@@ -1,8 +1,7 @@
 # Postautomoton
-A Python 3 script to automate Mastodon status updates via API
+A Python 3 script to post status updates about new RSS feed posts to Mastodon
 ----
 
-- Posts status updates about new RSS feed posts to Mastodon
 - Designed to be scheduled with [Cron](https://crontab.guru/examples.html)
 - Does not need 'sudo' to run
 - Edit the CONSTANTS in the beginning portion of the script to suit your needs
