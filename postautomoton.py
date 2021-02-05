@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #
 # Check RSS feed for posts published in past __ hours
 # If any, share post title and URL to Mastodon
