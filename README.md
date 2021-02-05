@@ -15,10 +15,10 @@ Dependencies:
 - [pytz](https://pypi.org/project/pytz/)
 
 To make executable on *nix systems for file owner: 
-- sudo chmod u+x postautomoton.py
+- '''sudo chmod u+x postautomoton.py'''
 
 To make executable on *nix systems for all users:
-- sudo chmod +x postautomoton.py
+- '''sudo chmod +x postautomoton.py'''
 
 ----
 Joseph Kreydt
