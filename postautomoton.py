@@ -98,7 +98,7 @@ def convert_rss_post_datetime_to_utc(rss_post):
         # Convert the string to datetime object
         rss_post_date_offset_aware = datetime.strptime(rss_post_date_offset_aware_string, "%a, %d %b %Y %H:%M:%S %z")
         
-        return rss_post_date_offset_aware
+    return rss_post_date_offset_aware
 
 # Look through RSS posts to see if there has been a new post in past 24 hours
 # If so, add to list of new_rss_posts
